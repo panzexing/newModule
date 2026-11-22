@@ -4,13 +4,13 @@ PyTorch implementation of **OurModel (R-NoContext)** for herb–symptom associat
 
 ## Training
 
-Use Python 3.10+ with a CUDA-enabled PyTorch 2.8 installation. Dependencies are listed in `requirements.txt`. From the repository root on Linux, select the physical GPU and run both datasets with:
+Use Python 3.10+ with a CUDA-enabled PyTorch 2.8 installation. Dependencies are listed in `requirements.txt`. From the repository root, train on HIT and TCMIO using GPU 1 with:
 
 ```bash
-GPU_ID=1 bash run_all.sh
+python train.py --device cuda:1
 ```
 
-The launcher maps the selected GPU to process-local `cuda:0` and uses Linux `flock` to protect the default output directory. Run the same command to resume. Each completed fold has an independent `outputs/<dataset>/fold_XX/final.pt`, test predictions and metrics. Training saves an atomic rolling checkpoint after each epoch and removes it once the final model and predictions are verified.
+Set `--device` to the desired PyTorch device. The default is `cuda:0`; `cpu` is also supported. CUDA indices are relative to the GPUs visible to the process. The training entry point locks the output directory while it runs. Run the same command to resume. Each completed fold has an independent `outputs/<dataset>/fold_XX/final.pt`, test predictions and metrics. Training saves an atomic rolling checkpoint after each epoch and removes it once the final model and predictions are verified.
 
 ## Data and protocol
 

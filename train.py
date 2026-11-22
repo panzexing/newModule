@@ -7,8 +7,12 @@ import os
 from pathlib import Path
 import random
 
+os.environ.setdefault("CUDA_DEVICE_ORDER", "PCI_BUS_ID")
+os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+
 import numpy as np
 import torch
+from filelock import FileLock, Timeout
 from sklearn.metrics import (accuracy_score, average_precision_score, f1_score,
                             precision_score, recall_score, roc_auc_score)
 
@@ -148,11 +152,26 @@ def run_fold(graph, split, folder, identity, device):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--device", default="cuda:0")
+    parser.add_argument("--device", default="cuda:0", help="PyTorch device, e.g. cuda:1 or cpu (default: cuda:0)")
     parser.add_argument("--data-dir", type=Path, default=ROOT/"data")
     parser.add_argument("--output-dir", type=Path, default=ROOT/"outputs")
     args = parser.parse_args()
     device = torch.device(args.device)
+    if device.type == "cuda":
+        torch.cuda.set_device(device.index if device.index is not None else 0)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    lock = FileLock(args.output_dir / ".run.lock")
+    try:
+        lock.acquire(timeout=0)
+    except Timeout:
+        parser.exit(1, f"Another training process is using {args.output_dir}\n")
+    try:
+        train_datasets(args, device)
+    finally:
+        lock.release()
+
+
+def train_datasets(args, device):
     torch.set_num_threads(1)
     summaries = []
     for dataset in ("HIT","TCMIO"):
