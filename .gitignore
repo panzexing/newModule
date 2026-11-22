@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+outputs/
+logs/
+.venv/
+
+# Model weights and exported checkpoints
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
